@@ -16,6 +16,7 @@
 
 @property (nonatomic, copy) NSString *email;
 @property (nonatomic, copy) NSString *password;
+@property (nonatomic, copy) NSString *username;
 
 @property (nonatomic, copy) NSString *realm;
 @property (nonatomic, strong) NSNumber *emailVerified;
@@ -55,6 +56,15 @@
                        password:(NSString*)password;
 
 /**
+ * Creates a user with the given credentials.
+ *
+ * @param  username    The username.
+ * @param  password    The user password.
+ */
+- (LBUser *)createUserWithUserName:(NSString*)username
+                       password:(NSString*)password;
+
+/**
  * Blocks of this type are executed when
  * LBUserRepository::loginWithEmail:password:success:failure: is successful.
  */
@@ -69,6 +79,20 @@ typedef void (^LBUserLoginSuccessBlock)(LBAccessToken* token);
  * @param failure  The block to be executed when the login fails.
  */
 - (void)loginWithEmail:(NSString*)email
+              password:(NSString*)password
+               success:(LBUserLoginSuccessBlock)success
+               failure:(SLFailureBlock)failure;
+
+/**
+ * Attempts to log in with the given credentials.  The returned access
+ * token will be passed for all subsequent server interaction.
+ *
+ * @param username The username.
+ * @param password The user password.
+ * @param success  The block to be executed when the login is successful.
+ * @param failure  The block to be executed when the login fails.
+ */
+- (void)loginWithUserName:(NSString*)username
               password:(NSString*)password
                success:(LBUserLoginSuccessBlock)success
                failure:(SLFailureBlock)failure;
@@ -90,6 +114,20 @@ typedef void (^LBUserLoginFindUserSuccessBlock)(LBUser *user);
                     password:(NSString*)password
                      success:(LBUserLoginFindUserSuccessBlock)success
                      failure:(SLFailureBlock)failure;
+
+
+/**
+ * Attempts to log in with the given credentials and return the LBUser.
+ *
+ * @param username The username.
+ * @param password The user password.
+ * @param success  The block to be executed when the login is successful.
+ * @param failure  The block to be executed when the login fails.
+ */
+- (void)userByLoginWithUserName:(NSString*)username
+                       password:(NSString*)password
+                        success:(LBUserLoginFindUserSuccessBlock)success
+                        failure:(SLFailureBlock)failure;
 
 /**
  * Blocks of this type are executed when
