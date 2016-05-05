@@ -99,7 +99,8 @@
 
 - (LBModel *)modelWithDictionary:(NSDictionary *)dictionary {
     LBModel *model = (LBModel *)[[self.modelClass alloc] initWithRepository:self parameters:dictionary];
-
+    NSScanner* scanner = nil;
+    NSString* propertyType = nil;
     [[model _overflow] addEntriesFromDictionary:dictionary];
 
     for (Class targetClass = [model class]; targetClass != [LBModel superclass]; targetClass = [targetClass superclass]) {
@@ -113,22 +114,50 @@
             if (obj == nil) {
                 continue;
             }
-
+            
+            
+            //get property attributes
             const char *type = property_getAttributes(property);
-            if ([obj isKindOfClass:[NSString class]]) {
-                // if the property type is NSDate, convert the string to a date object
-                if (strncmp(type, "T@\"NSDate\",", 11) == 0) {
-                    obj = [SLObject dateFromEncodedProperty:obj];
-                }
-            } else if ([obj isKindOfClass:[NSDictionary class]]) {
-                // if the property type is NSMutableData, convert the json object to a data object
-                if (strncmp(type, "T@\"NSMutableData\",", 18) == 0 ||
-                    strncmp(type, "T@\"NSData\",", 11) == 0) {
-                    obj = [SLObject dataFromEncodedProperty:obj];
-                }
-                // if the property type is CLLocation, convert the json object to a location object
-                else if (strncmp(type, "T@\"CLLocation\",", 15) == 0) {
-                    obj = [SLObject locationFromEncodedProperty:obj];
+            NSString* propertyAttributes = @(type);
+            NSArray* attributeItems = [propertyAttributes componentsSeparatedByString:@","];
+            
+            
+            scanner = [NSScanner scannerWithString: propertyAttributes];
+            
+            //JMLog(@"attr: %@", [NSString stringWithCString:attrs encoding:NSUTF8StringEncoding]);
+            [scanner scanUpToString:@"T" intoString: nil];
+            [scanner scanString:@"T" intoString:nil];
+            
+            //check if the property is an instance of a class
+            if ([scanner scanString:@"@\"" intoString: &propertyType]) {
+                
+                [scanner scanUpToCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"\"<"]
+                                        intoString:&propertyType];
+                Class classType = NSClassFromString(propertyType);
+                
+                if ([classType isSubclassOfClass:[LBModel class]]){
+                    //check if exists a Repository
+                    Class repoClass = NSClassFromString([NSString stringWithFormat:@"%@Repository",propertyType]);
+                    id innerModelRepo = [repoClass repository];
+                    if ([repoClass isSubclassOfClass:[LBModelRepository class]]){
+                        obj = [innerModelRepo modelWithDictionary:obj];
+                    }
+                   
+                }else if ([obj isKindOfClass:[NSString class]]) {
+                    // if the property type is NSDate, convert the string to a date object
+                    if (strncmp(type, "T@\"NSDate\",", 11) == 0) {
+                        obj = [SLObject dateFromEncodedProperty:obj];
+                    }
+                } else if ([obj isKindOfClass:[NSDictionary class]]) {
+                    // if the property type is NSMutableData, convert the json object to a data object
+                    if (strncmp(type, "T@\"NSMutableData\",", 18) == 0 ||
+                        strncmp(type, "T@\"NSData\",", 11) == 0) {
+                        obj = [SLObject dataFromEncodedProperty:obj];
+                    }
+                    // if the property type is CLLocation, convert the json object to a location object
+                    else if (strncmp(type, "T@\"CLLocation\",", 15) == 0) {
+                        obj = [SLObject locationFromEncodedProperty:obj];
+                    }
                 }
             }
 
