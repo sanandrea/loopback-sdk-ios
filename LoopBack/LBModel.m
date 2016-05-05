@@ -115,6 +115,8 @@
                 continue;
             }
             
+            //Courtesy code from Marin Todorov http://www.underplot.com
+            //see https://github.com/icanzilb/JSONModel/blob/master/JSONModel/JSONModel/JSONModel.m
             
             //get property attributes
             const char *type = property_getAttributes(property);
